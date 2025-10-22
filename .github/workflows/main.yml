@@ -1,0 +1,31 @@
+name: Update submodules and deploy
+
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '*/15 * * * *'  # Cada 15 minutos
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: true
+
+      - name: Update submodules
+        run: |
+          git submodule update --init --recursive
+          git submodule update --recursive --remote
+
+      - name: Commit changes
+        env:
+          TZ: Europe/Madrid
+        run: |
+          git config user.name 'GitHub Actions'
+          git config user.email 'actions@github.com'
+          git add .
+          git commit -m "Compilación de web automática: $(date '+%d/%m/%Y %H:%M:%S %Z')" || echo "No hay cambios - $(date '+%d/%m/%Y %H:%M:%S %Z')"
+          git push
